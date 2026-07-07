@@ -7,9 +7,9 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
-let cachedServer: Server;
+let cachedServer: any;
 
-async function bootstrapServer(): Promise<Server> {
+async function bootstrapServer(): Promise<any> {
   if (!cachedServer) {
     const expressApp = express();
     const nestApp = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
