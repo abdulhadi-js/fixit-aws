@@ -28,7 +28,11 @@ import { HealthController } from './health.controller';
         return {
           type: 'postgres',
           ...(url
-            ? { url, ssl: { rejectUnauthorized: false }, extra: { ssl: { rejectUnauthorized: false } } }
+            ? { 
+                url: url.replace('?sslmode=require', ''), 
+                ssl: { rejectUnauthorized: false }, 
+                extra: { ssl: { rejectUnauthorized: false } } 
+              }
             : {
                 host: config.get<string>('DB_HOST'),
                 port: config.get<number>('DB_PORT'),
