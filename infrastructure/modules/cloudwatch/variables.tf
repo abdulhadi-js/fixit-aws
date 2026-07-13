@@ -1,0 +1,9 @@
+variable "name_prefix" { type = string }
+variable "asg_name" { type = string }
+variable "alb_arn_suffix" { type = string }
+variable "target_group_arn_suffix" { type = string }
+variable "scale_up_policy_arn" { type = string }
+variable "scale_down_policy_arn" { type = string }
+variable "cpu_scale_up_threshold" { type = number }
+variable "cpu_scale_down_threshold" { type = number }
+variable "alarm_email" { type = string }

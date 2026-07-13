@@ -8,7 +8,7 @@ on:
 
 env:
   AWS_REGION: ap-southeast-1
-  ECR_REPOSITORY: fixit-backend
+  ECR_REPOSITORY: fixit-production-app
   S3_BUCKET: fixit-frontend-app
 
 jobs:
@@ -164,39 +164,13 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
-            IMAGE_TAG=${{ github.sha }}
-
-            aws ecr get-login-password --region ap-southeast-1 | \
-              docker login --username AWS --password-stdin $ECR_REGISTRY
-
-            docker pull $ECR_REGISTRY/fixit-backend:$IMAGE_TAG
-
-            docker stop fixit-backend || true
-            docker rm fixit-backend || true
-
-            docker run -d \
-              --name fixit-backend \
-              --restart unless-stopped \
-              -p 3001:3001 \
-              -e NODE_ENV=production \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e JWT_EXPIRATION="${{ secrets.JWT_EXPIRATION }}" \
-              -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
-              -e JWT_REFRESH_EXPIRATION="${{ secrets.JWT_REFRESH_EXPIRATION }}" \
-              -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
-              -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
-              $ECR_REGISTRY/fixit-backend:$IMAGE_TAG
-
-            sleep 5 && docker ps | grep fixit-backend && echo "✅ Backend deployed!" || echo "❌ Failed!"
+      - name: Trigger ASG Instance Refresh
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name fixit-production-asg \
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+            
+          echo "✅ ASG Instance Refresh triggered! New instances will pull the latest Docker image."
 
   # ─────────────────────────────────────────────────────────────────────────────
   # JOB 6: Deploy Frontend to S3 + CloudFront
