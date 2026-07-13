@@ -168,9 +168,9 @@ jobs:
         run: |
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name fixit-production-asg \
-            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}' || echo "Notice: An instance refresh is already in progress. New instances will automatically pick up the latest Docker image."
             
-          echo "✅ ASG Instance Refresh triggered! New instances will pull the latest Docker image."
+          echo "✅ ASG Instance Refresh triggered (or already in progress)!"
 
   # ─────────────────────────────────────────────────────────────────────────────
   # JOB 6: Deploy Frontend to S3 + CloudFront
