@@ -13,7 +13,8 @@ export default function LoginPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    await login({ phone_number: phoneNumber, password });
+    const sanitizedPhone = phoneNumber.replace(/\s+/g, '');
+    await login({ phone_number: sanitizedPhone, password });
   }
 
   return (
@@ -44,7 +45,7 @@ export default function LoginPage() {
             label="Phone Number"
             id="phone_number"
             name="phone_number"
-            placeholder="+92 3XX XXXXXXX"
+            placeholder="+923001234567"
             required
             type="tel"
             icon="phone"

@@ -21,7 +21,9 @@ export default function RegisterPage() {
       setError('Please agree to the Terms of Service and Privacy Policy.');
       return;
     }
-    await register({ full_name: fullName, phone_number: phoneNumber, password, role });
+    // Sanitize phone: strip all spaces so "+92 3XX XXXXXXX" becomes "+923XXXXXXXXX" (E.164)
+    const sanitizedPhone = phoneNumber.replace(/\s+/g, '');
+    await register({ full_name: fullName, phone_number: sanitizedPhone, password, role });
   }
 
   return (
@@ -132,12 +134,15 @@ export default function RegisterPage() {
               label="Phone Number"
               id="phone"
               name="phone"
-              placeholder="+92 3XX XXXXXXX"
+              placeholder="+923001234567"
               required
               type="tel"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
+            <p className="text-xs text-text-secondary -mt-2">
+              Include country code, e.g. <span className="font-semibold">+923001234567</span>
+            </p>
             <Input
               label="Password"
               id="password"
