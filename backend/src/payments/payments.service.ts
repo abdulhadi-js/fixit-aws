@@ -42,6 +42,7 @@ export class PaymentsService {
       amount: amountPkr * 100, // Stripe requires smallest currency unit
       currency: 'pkr',
       capture_method: 'manual',
+      payment_method_types: ['card'],
       metadata: { booking_id: bookingId },
     });
 
