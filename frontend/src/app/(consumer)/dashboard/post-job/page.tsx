@@ -5,9 +5,60 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useCreateBooking } from '../../../../hooks/useBookings';
 import { TopNav } from '../../../../components/layout/TopNav';
-import { ArrowLeft, ArrowRight, CheckCircle2, Home, MapPin, Calendar, DollarSign, Wrench, Package } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Home, MapPin, Calendar, DollarSign, Wrench, Package, CreditCard, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx');
+
+function CheckoutForm({ total, onSuccess }: { total: number, onSuccess: () => void }) {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!stripe || !elements) return;
+
+        setIsProcessing(true);
+        setErrorMessage(null);
+
+        const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            redirect: 'if_required',
+        });
+
+        if (error) {
+            setErrorMessage(error.message || 'An unexpected error occurred.');
+            setIsProcessing(false);
+        } else if (paymentIntent && (paymentIntent.status === 'requires_capture' || paymentIntent.status === 'succeeded')) {
+            onSuccess();
+        } else {
+            setErrorMessage('Payment failed or requires further action.');
+            setIsProcessing(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <PaymentElement />
+            {errorMessage && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                    {errorMessage}
+                </div>
+            )}
+            <div className="mt-8">
+                <button disabled={isProcessing || !stripe || !elements} type="submit" className="w-full px-8 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-accent-hover transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                    {isProcessing ? 'Processing...' : `Authorize Payment Hold - Rs. ${total}`}
+                </button>
+                <p className="text-sm text-text-secondary text-center mt-3">You won't be charged until the job is complete.</p>
+            </div>
+        </form>
+    );
+}
 
 const CATEGORIES = [
   { id: 'PLUMBING', label: 'Plumbing', icon: Wrench },
@@ -27,6 +78,8 @@ export default function PostJobPage() {
   const { submitBooking, loading: isSubmitting } = useCreateBooking();
   const [cities, setCities] = useState<string[]>(['Lahore', 'Islamabad', 'Karachi']);
   const [loadingCities, setLoadingCities] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CARD');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCities() {
@@ -76,7 +129,7 @@ export default function PostJobPage() {
     }
     
     try {
-      await submitBooking({
+      const data = await submitBooking({
         // For custom jobs, pick a generic service_id from backend or use a hardcoded one
         service_id: '43dc8fe1-2ffa-42a8-8afa-6a15a393ee6a', // Deep Home Cleaning fallback ID for now
         scheduled_start: `${formData.date}T${formData.time}:00Z`,
@@ -87,10 +140,17 @@ export default function PostJobPage() {
           description: formData.description,
           title: formData.title
         },
-        estimated_amount: Number(formData.budget)
+        estimated_amount: Number(formData.budget),
+        payment_method: paymentMethod
       });
-      alert('Custom job posted successfully! Technicians will be notified.');
-      router.push('/dashboard');
+      
+      if (paymentMethod === 'CASH') {
+        alert('Custom job posted successfully! Technicians will be notified.');
+        router.push('/dashboard');
+      } else {
+        setClientSecret(data.client_secret);
+        setStep(5);
+      }
     } catch (err: any) {
       alert(err.message || 'Failed to post job');
     }
@@ -118,7 +178,7 @@ export default function PostJobPage() {
                 style={{ width: `${((step - 1) / 3) * 100}%` }}
               ></div>
               
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors duration-300 ${
                   step >= i ? 'bg-primary text-on-primary shadow-lg shadow-primary/25' : 'bg-surface-high border-2 border-surface-variant text-text-secondary'
                 }`}>
@@ -265,34 +325,71 @@ export default function PostJobPage() {
                     <div className="pt-2">
                       <p className="text-text-secondary mb-1 text-sm">Description</p>
                       <p className="font-medium text-sm leading-relaxed">{formData.description || 'No description provided.'}</p>
+                    <div className="pt-2 border-t border-border-soft mt-4">
+                      <p className="text-text-secondary mb-3 text-sm">Payment Method</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <label className={`cursor-pointer flex items-center p-4 border rounded-xl transition-all ${paymentMethod === 'CARD' ? 'border-primary bg-primary/5' : 'border-border-soft hover:border-primary/30'}`}>
+                          <input type="radio" name="paymentMethod" value="CARD" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} className="hidden" />
+                          <CreditCard className={`w-5 h-5 mr-3 ${paymentMethod === 'CARD' ? 'text-primary' : 'text-text-secondary'}`} />
+                          <div className="font-medium">Pay via Card</div>
+                        </label>
+                        <label className={`cursor-pointer flex items-center p-4 border rounded-xl transition-all ${paymentMethod === 'CASH' ? 'border-primary bg-primary/5' : 'border-border-soft hover:border-primary/30'}`}>
+                          <input type="radio" name="paymentMethod" value="CASH" checked={paymentMethod === 'CASH'} onChange={() => setPaymentMethod('CASH')} className="hidden" />
+                          <Banknote className={`w-5 h-5 mr-3 ${paymentMethod === 'CASH' ? 'text-primary' : 'text-text-secondary'}`} />
+                          <div className="font-medium">Cash on Site</div>
+                        </label>
+                      </div>
                     </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 5 && clientSecret && (
+                <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold mb-2">Secure Payment</h2>
+                    <p className="text-text-secondary">Please enter your card details to confirm the booking.</p>
+                  </div>
+                  
+                  <div className="bg-canvas border border-border-soft rounded-2xl p-6 shadow-sm">
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <CheckoutForm 
+                        total={Number(formData.budget)} 
+                        onSuccess={() => {
+                          alert('Payment authorized and custom job posted successfully!');
+                          router.push('/dashboard');
+                        }} 
+                      />
+                    </Elements>
                   </div>
                 </motion.div>
               )}
 
             </AnimatePresence>
 
-            <div className="mt-12 flex justify-between items-center pt-6 border-t border-border-soft">
-              {step > 1 ? (
-                <button onClick={handlePrev} className="px-6 py-3 border border-border-soft rounded-xl font-bold text-text-secondary hover:bg-surface-muted transition-colors flex items-center gap-2">
-                  <ArrowLeft className="w-4 h-4" /> Back
-                </button>
-              ) : (
-                <Link href="/dashboard" className="px-6 py-3 border border-border-soft rounded-xl font-bold text-text-secondary hover:bg-surface-muted transition-colors">
-                  Cancel
-                </Link>
-              )}
+            {step < 5 && (
+              <div className="mt-12 flex justify-between items-center pt-6 border-t border-border-soft">
+                {step > 1 ? (
+                  <button onClick={handlePrev} className="px-6 py-3 border border-border-soft rounded-xl font-bold text-text-secondary hover:bg-surface-muted transition-colors flex items-center gap-2">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </button>
+                ) : (
+                  <Link href="/dashboard" className="px-6 py-3 border border-border-soft rounded-xl font-bold text-text-secondary hover:bg-surface-muted transition-colors">
+                    Cancel
+                  </Link>
+                )}
 
-              {step < 4 ? (
-                <button onClick={handleNext} className="px-6 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-accent-hover transition-colors flex items-center gap-2 shadow-lg shadow-primary/20">
-                  Next Step <ArrowRight className="w-4 h-4" />
-                </button>
-              ) : (
-                <button onClick={handleSubmit} disabled={isSubmitting} className="px-8 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-accent-hover transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isSubmitting ? 'Posting...' : 'Post Job'} <CheckCircle2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+                {step < 4 ? (
+                  <button onClick={handleNext} className="px-6 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-accent-hover transition-colors flex items-center gap-2 shadow-lg shadow-primary/20">
+                    Next Step <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button onClick={handleSubmit} disabled={isSubmitting} className="px-8 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-accent-hover transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isSubmitting ? 'Posting...' : (paymentMethod === 'CARD' ? 'Proceed to Payment' : 'Post Job')} <CheckCircle2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
         </main>
