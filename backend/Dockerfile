@@ -34,6 +34,6 @@ EXPOSE 3001
 ENV NODE_ENV=production
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3001/api/v1/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:3001/api/v1/health || exit 1
 
 CMD ["node", "dist/main"]
