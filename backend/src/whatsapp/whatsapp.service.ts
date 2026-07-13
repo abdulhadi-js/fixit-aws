@@ -21,8 +21,8 @@ export class WhatsappService {
    * Phone number must be in E.164 format: +923131123595
    */
   async sendOtp(phoneNumber: string, otpCode: string): Promise<void> {
-    // Development bypass
-    if (this.apiToken === 'REPLACE_WITH_YOUR_META_ACCESS_TOKEN' || this.apiToken === 'MOCK') {
+    // Bypass if no credentials configured (dev/staging environments)
+    if (!this.apiToken || this.apiToken === 'REPLACE_WITH_YOUR_META_ACCESS_TOKEN' || this.apiToken === 'MOCK') {
       this.logger.warn(`[DEV MODE] WhatsApp API bypassed. OTP for ${phoneNumber} is: ${otpCode}`);
       return;
     }
@@ -65,10 +65,10 @@ export class WhatsappService {
 
       this.logger.log(`OTP sent via WhatsApp to ${phoneNumber}`);
     } catch (error: any) {
+      // Log but DO NOT re-throw — a WhatsApp failure should never block registration
       this.logger.error(
         `Failed to send WhatsApp OTP to ${phoneNumber}: ${error?.response?.data?.error?.message ?? error.message}`,
       );
-      throw error;
     }
   }
 }

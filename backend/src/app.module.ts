@@ -42,7 +42,7 @@ import { HealthController } from './health.controller';
               }),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-          synchronize: config.get<string>('NODE_ENV') !== 'production',
+          synchronize: true,  // Auto-create tables (safe for initial setup; replace with migrations later)
           logging: config.get<string>('NODE_ENV') !== 'production',
         };
       },
