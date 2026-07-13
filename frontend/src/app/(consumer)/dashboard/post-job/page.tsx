@@ -325,6 +325,7 @@ export default function PostJobPage() {
                     <div className="pt-2">
                       <p className="text-text-secondary mb-1 text-sm">Description</p>
                       <p className="font-medium text-sm leading-relaxed">{formData.description || 'No description provided.'}</p>
+                    </div>
                     <div className="pt-2 border-t border-border-soft mt-4">
                       <p className="text-text-secondary mb-3 text-sm">Payment Method</p>
                       <div className="grid grid-cols-2 gap-4">
