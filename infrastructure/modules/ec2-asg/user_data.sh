@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
 
-# Update and install dependencies
-apt-get update -y
-apt-get install -y docker.io awscli jq
-
 # Start and enable Docker
 systemctl start docker
 systemctl enable docker
