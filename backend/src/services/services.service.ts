@@ -11,6 +11,40 @@ export class ServicesService {
     private readonly serviceRepo: Repository<ServiceCategory>,
   ) {}
 
+  async onModuleInit() {
+    // Seed essential services for testing/frontend fallback if they don't exist
+    const defaultServices = [
+      {
+        id: '43dc8fe1-2ffa-42a8-8afa-6a15a393ee6a',
+        title: 'Deep Home Cleaning',
+        base_price: 3000,
+        estimated_duration_mins: 120,
+      },
+      {
+        id: 'CUSTOM', // Just in case they send 'CUSTOM' instead of a UUID, though schema expects UUID, we'll only seed the UUID one for now.
+        title: 'Custom Job',
+        base_price: 1000,
+        estimated_duration_mins: 60,
+      }
+    ];
+
+    try {
+      const count = await this.serviceRepo.count();
+      if (count === 0) {
+        // We only seed the valid UUID one to avoid DB cast errors on the ID column
+        await this.serviceRepo.save({
+          id: '43dc8fe1-2ffa-42a8-8afa-6a15a393ee6a',
+          title: 'Deep Home Cleaning',
+          base_price: 3000,
+          estimated_duration_mins: 120,
+        });
+        console.log('🌱 Seeded default services successfully.');
+      }
+    } catch (error) {
+      console.error('Failed to seed services:', error);
+    }
+  }
+
   findAll(): Promise<ServiceCategory[]> {
     return this.serviceRepo.find();
   }
