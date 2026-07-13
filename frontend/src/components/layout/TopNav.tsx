@@ -114,19 +114,19 @@ export const TopNav = () => {
           <div className="hidden md:flex items-center gap-4">
             {isLoggedIn ? (
               <>
-                <Link 
-                  href={role === 'TECHNICIAN' ? '/technician/dashboard' : '/dashboard'} 
+                <a 
+                  href={role === 'TECHNICIAN' ? '/technician/dashboard/' : '/dashboard/'} 
                   className="font-label-md text-sm text-text-secondary hover:text-primary transition-colors"
                 >
                   Dashboard
-                </Link>
+                </a>
                 {role === 'CONSUMER' && (
-                  <Link 
-                    href="/dashboard/post-job" 
+                  <a 
+                    href="/dashboard/post-job/" 
                     className="font-label-md text-sm text-primary hover:text-accent-hover transition-colors font-medium flex items-center gap-1"
                   >
                     Post a Job
-                  </Link>
+                  </a>
                 )}
                 <Button variant="ghost" onClick={logout} className="gap-2">
                   Logout
@@ -197,13 +197,13 @@ export const TopNav = () => {
               <div className="mt-auto pt-6 flex flex-col gap-4">
                 {isLoggedIn ? (
                   <>
-                    <Link href={role === 'TECHNICIAN' ? '/technician/dashboard' : '/dashboard'} onClick={() => setMobileMenuOpen(false)}>
+                    <a href={role === 'TECHNICIAN' ? '/technician/dashboard/' : '/dashboard/'} onClick={() => setMobileMenuOpen(false)}>
                       <Button fullWidth variant="outline">Dashboard</Button>
-                    </Link>
+                    </a>
                     {role === 'CONSUMER' && (
-                      <Link href="/dashboard/post-job" onClick={() => setMobileMenuOpen(false)}>
+                      <a href="/dashboard/post-job/" onClick={() => setMobileMenuOpen(false)}>
                         <Button fullWidth variant="outline" className="text-primary border-primary hover:bg-primary/5">Post a Job</Button>
-                      </Link>
+                      </a>
                     )}
                     <Button fullWidth onClick={() => { logout(); setMobileMenuOpen(false); }}>Logout</Button>
                   </>

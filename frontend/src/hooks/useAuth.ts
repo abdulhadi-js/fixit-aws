@@ -72,7 +72,7 @@ export function useAuth() {
   const logout = () => {
     clearTokens();
     setRole(null);
-    router.push('/login');
+    window.location.href = '/login/';
   };
 
   return {

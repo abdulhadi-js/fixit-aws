@@ -28,10 +28,10 @@ export default function ConsumerDashboardPage() {
         <main className="flex-grow px-margin-x max-w-container-max mx-auto w-full py-12 flex flex-col gap-gap-standard">
             <header className="mb-8 flex justify-between items-center">
                 <h1 className="font-headline-lg text-headline-lg text-on-surface">Welcome back</h1>
-                <Link href="/dashboard/post-job" className="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md hover:bg-accent-hover transition-colors shadow-sm flex items-center gap-2">
+                <a href="/dashboard/post-job/" className="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md hover:bg-accent-hover transition-colors shadow-sm flex items-center gap-2">
                     <span className="material-symbols-outlined text-[20px]">add_circle</span>
                     Post a Custom Job
-                </Link>
+                </a>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-gap-standard">
