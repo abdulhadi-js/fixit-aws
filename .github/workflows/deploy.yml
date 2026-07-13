@@ -134,7 +134,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: "http://fixit-production-alb-1117262851.ap-southeast-1.elb.amazonaws.com"
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_TYooMQauvdEDq54NiTphI7jx"
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
 
       - name: Upload static export artifact
         uses: actions/upload-artifact@v4
