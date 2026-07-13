@@ -9,6 +9,7 @@ import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { ServicesModule } from './services/services.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { PaymentsModule } from './payments/payments.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { PaymentsModule } from './payments/payments.module';
     BookingsModule,
     PaymentsModule,
   ],
+  controllers: [HealthController],
   providers: [
     // Apply rate limiting globally
     {

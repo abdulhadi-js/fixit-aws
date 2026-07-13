@@ -1,30 +1,39 @@
-# ─────────────────────────────────────────
-# Stage 1: Builder
-# ─────────────────────────────────────────
+# ─── Build Stage ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copy dependency files first for better layer caching
 COPY package*.json ./
 RUN npm install
 
+# Copy source code and build
 COPY . .
 RUN npm run build
 
-# ─────────────────────────────────────────
-# Stage 2: Production
-# ─────────────────────────────────────────
+# Remove dev dependencies
+RUN npm prune --production
+
+# ─── Production Stage ────────────────────────────────────────────────────────
 FROM node:20-alpine AS production
+
+# Create a non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Copy built artifacts and prod dependencies from builder
+COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./package.json
 
-COPY package*.json ./
-RUN npm install --omit=dev && npm cache clean --force
-
-COPY --from=builder /app/dist ./dist
+USER appuser
 
 EXPOSE 3001
+
+ENV NODE_ENV=production
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3001/api/v1/health || exit 1
 
 CMD ["node", "dist/main"]
