@@ -230,6 +230,28 @@ export class BookingsService {
     await this.paymentsService.refundPayment(bookingId);
   }
 
+  /** Consumer marks a job as completed (Cash payments) */
+  async completeByConsumer(bookingId: string, consumerId: string): Promise<Booking> {
+    const booking = await this.bookingRepo.findOne({ where: { id: bookingId } });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.consumer_id !== consumerId) {
+      throw new ForbiddenException('You can only update your own bookings');
+    }
+    
+    if (booking.status === BookingStatus.COMPLETED) {
+      throw new BadRequestException('Booking is already completed');
+    }
+
+    if (booking.payment_method !== 'CASH') {
+      throw new BadRequestException('Only CASH payment jobs can be manually marked complete by the consumer');
+    }
+
+    await this.bookingRepo.update(bookingId, { status: BookingStatus.COMPLETED });
+    
+    const updated = await this.bookingRepo.findOne({ where: { id: bookingId } });
+    return updated!;
+  }
+
   async findById(id: string): Promise<Booking> {
     const booking = await this.bookingRepo.findOne({
       where: { id },

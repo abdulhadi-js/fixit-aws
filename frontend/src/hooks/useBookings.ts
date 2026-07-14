@@ -45,3 +45,24 @@ export function useCreateBooking() {
 
   return { submitBooking, loading, error, setError };
 }
+
+export function useCompleteBooking() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const completeJob = async (jobId: string) => {
+    try {
+      setLoading(true);
+      setError('');
+      const { completeBookingAsConsumer } = await import('../lib/api/bookings.api');
+      return await completeBookingAsConsumer(jobId);
+    } catch (err: any) {
+      setError(err.message || 'Failed to mark job as complete');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { completeJob, loading, error, setError };
+}

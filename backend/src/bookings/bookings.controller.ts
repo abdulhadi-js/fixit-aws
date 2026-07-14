@@ -104,6 +104,19 @@ export class BookingsController {
   }
 
   /**
+   * PATCH /api/v1/bookings/:id/complete — Consumer marks a cash job as completed
+   */
+  @Patch(':id/complete')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.CONSUMER)
+  completeJobAsConsumer(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.bookingsService.completeByConsumer(id, user.id);
+  }
+
+  /**
    * DELETE /api/v1/bookings/:id — Cancel a booking
    */
   @Delete(':id')

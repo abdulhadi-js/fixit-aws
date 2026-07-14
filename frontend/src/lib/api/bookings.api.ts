@@ -39,3 +39,8 @@ export const updateBookingStatus = (id: string, status: BookingStatus) =>
     method: 'PATCH',
     body: JSON.stringify({ status })
   });
+
+export const completeBookingAsConsumer = (id: string) => 
+  apiRequest<{ message: string }>(`/bookings/${id}/complete`, { 
+    method: 'PATCH' 
+  });
