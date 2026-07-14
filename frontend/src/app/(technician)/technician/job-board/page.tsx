@@ -54,7 +54,7 @@ export default function JobBoardPage() {
   const router = useRouter();
 
   const filteredJobs = jobs.filter(job => {
-    const categoryMatch = filter === 'ALL' || (job.service?.category || '').toUpperCase() === filter;
+    const categoryMatch = filter === 'ALL' || (job.service?.metadata?.category || '').toUpperCase() === filter;
     const searchMatch = !search || 
       (job.service?.title || '').toLowerCase().includes(search.toLowerCase()) ||
       formatAddress(job.address_details).toLowerCase().includes(search.toLowerCase());
@@ -195,15 +195,15 @@ export default function JobBoardPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs font-bold px-2 py-1 bg-surface-muted rounded-md text-text-secondary uppercase">
-                            {job.service?.category || 'SERVICE'}
+                            {job.service?.metadata?.category || 'SERVICE'}
                           </span>
                           <span className="text-xs text-text-secondary">
                             {job.status}
                           </span>
                         </div>
                         <h3 className="text-xl font-bold mb-2">{job.service?.title || 'Custom Job Request'}</h3>
-                        {job.service?.description && (
-                          <p className="text-text-secondary text-sm mb-4 line-clamp-2">{job.service.description}</p>
+                        {job.service?.metadata?.description && (
+                          <p className="text-text-secondary text-sm mb-4 line-clamp-2">{job.service.metadata.description}</p>
                         )}
 
                         <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
