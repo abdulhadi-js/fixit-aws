@@ -1,0 +1,56 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Type "destroy" to confirm you want to delete all AWS resources'
+        required: true
+        default: ''
+
+env:
+  AWS_REGION: ap-southeast-1
+  TF_WORKING_DIR: infrastructure
+
+jobs:
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_destroy == 'destroy'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Empty S3 Frontend Bucket (Pre-requisite for destroy)
+        run: |
+          # We need to empty the S3 bucket otherwise Terraform will refuse to delete it
+          aws s3 rm s3://fixit-production-frontend-bucket --recursive || true
+          
+      - name: Empty ECR Repository (Pre-requisite for destroy)
+        run: |
+          # We need to empty the ECR repo otherwise Terraform will refuse to delete it
+          IMAGES=$(aws ecr list-images --repository-name fixit-production-repo --query 'imageIds[*]' --output json || echo "[]")
+          if [ "$IMAGES" != "[]" ] && [ "$IMAGES" != "" ]; then
+            aws ecr batch-delete-image --repository-name fixit-production-repo --image-ids "$IMAGES" || true
+          fi
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform destroy -auto-approve
