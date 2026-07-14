@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { ServiceCategory } from '../services/service-category.entity';
@@ -71,4 +72,7 @@ export class Booking {
 
   @Column({ type: 'varchar', default: 'CARD' })
   payment_method: string;
+
+  @CreateDateColumn()
+  created_at: Date;
 }
