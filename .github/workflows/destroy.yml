@@ -32,14 +32,14 @@ jobs:
       - name: Empty S3 Frontend Bucket (Pre-requisite for destroy)
         run: |
           # We need to empty the S3 bucket otherwise Terraform will refuse to delete it
-          aws s3 rm s3://fixit-production-frontend-bucket --recursive || true
+          aws s3 rm s3://fixit-frontend-app --recursive || true
           
       - name: Empty ECR Repository (Pre-requisite for destroy)
         run: |
           # We need to empty the ECR repo otherwise Terraform will refuse to delete it
-          IMAGES=$(aws ecr list-images --repository-name fixit-production-repo --query 'imageIds[*]' --output json || echo "[]")
+          IMAGES=$(aws ecr list-images --repository-name fixit-production-app --query 'imageIds[*]' --output json || echo "[]")
           if [ "$IMAGES" != "[]" ] && [ "$IMAGES" != "" ]; then
-            aws ecr batch-delete-image --repository-name fixit-production-repo --image-ids "$IMAGES" || true
+            aws ecr batch-delete-image --repository-name fixit-production-app --image-ids "$IMAGES" || true
           fi
 
       - name: Setup Terraform
